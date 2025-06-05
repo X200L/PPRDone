@@ -3,6 +3,7 @@ class CustomerSimulator {
         this.products = {};
         this.questions = {};
         this.responses = {};
+        this.trustKeywords = {};
         this.initialized = false;
         this.currentProduct = null;
         this.askedQuestions = new Set();
@@ -11,6 +12,9 @@ class CustomerSimulator {
         this.lastQuestionType = null;
         this.positiveResponses = 0;
         this.negativeResponses = 0;
+        this.concernsRaised = new Set();
+        this.agreementLevel = 0;
+        this.lastResponseType = null;
     }
 
     async initialize() {
@@ -22,17 +26,12 @@ class CustomerSimulator {
             this.products = data.products;
             this.questions = data.questions;
             this.responses = data.responses;
+            this.trustKeywords = data.trust_keywords;
             this.initialized = true;
+            this.currentProduct = this.products.auto_services;
         } catch (error) {
             console.error('Error loading data:', error);
         }
-    }
-
-    selectRandomProduct() {
-        const productKeys = Object.keys(this.products);
-        const randomKey = productKeys[Math.floor(Math.random() * productKeys.length)];
-        this.currentProduct = this.products[randomKey];
-        return this.currentProduct;
     }
 
     getRandomQuestion() {
@@ -54,28 +53,68 @@ class CustomerSimulator {
 
     analyzeUserResponse(message) {
         const messageLower = message.toLowerCase();
+        let trustChange = 0;
         
-        if (messageLower.includes('Да') || 
-            messageLower.includes('Конечно') || 
-            messageLower.includes('ага') || 
-            messageLower.includes('Хорошо') || 
-            messageLower.includes('Отлично') ||
-            messageLower.includes('давай') ||
-            messageLower.includes('согласен')) {
-            this.positiveResponses++;
-            return 'positive';
+        // Анализ ключевых слов для определения типа ответа
+        if (messageLower.includes('цена') || messageLower.includes('стоимость') || messageLower.includes('руб')) {
+            this.concernsRaised.add('price');
         }
         
-        if (messageLower.includes('нет') || 
-            messageLower.includes('не') || 
-            messageLower.includes('сомневаюсь') || 
-            messageLower.includes('дорого') || 
-            messageLower.includes('сложно') ||
-            messageLower.includes('долго')) {
+        if (messageLower.includes('внедр') || messageLower.includes('установк') || messageLower.includes('настройк')) {
+            this.concernsRaised.add('implementation');
+        }
+        
+        if (messageLower.includes('качеств') || messageLower.includes('гарант') || messageLower.includes('поддержк')) {
+            this.concernsRaised.add('quality');
+        }
+        
+        if (messageLower.includes('эконом') || messageLower.includes('сэконом') || messageLower.includes('выгод')) {
+            this.concernsRaised.add('savings');
+        }
+        
+        if (messageLower.includes('преимуществ') || messageLower.includes('лучше') || messageLower.includes('уникальн')) {
+            this.concernsRaised.add('advantages');
+        }
+
+        // Проверка положительных ключевых слов
+        const positiveCount = this.trustKeywords.positive.filter(word => messageLower.includes(word)).length;
+        if (positiveCount > 0) {
+            this.positiveResponses++;
+            trustChange += positiveCount * this.trustKeywords.weights.positive;
+            this.lastResponseType = 'positive';
+        }
+
+        // Проверка отрицательных ключевых слов
+        const negativeCount = this.trustKeywords.negative.filter(word => messageLower.includes(word)).length;
+        if (negativeCount > 0) {
             this.negativeResponses++;
+            trustChange -= negativeCount * this.trustKeywords.weights.negative;
+            this.lastResponseType = 'negative';
+        }
+
+        // Проверка ключевых слов доверия
+        const trustCount = this.trustKeywords.trust.filter(word => messageLower.includes(word)).length;
+        if (trustCount > 0) {
+            trustChange += trustCount * this.trustKeywords.weights.trust;
+        }
+
+        // Проверка срочности
+        const urgencyCount = this.trustKeywords.urgency.filter(word => messageLower.includes(word)).length;
+        if (urgencyCount > 0) {
+            trustChange += urgencyCount * this.trustKeywords.weights.urgency;
+        }
+
+        // Обновление уровня согласия с учетом всех факторов
+        this.agreementLevel = Math.min(100, Math.max(0, this.agreementLevel + trustChange));
+
+        // Определение типа ответа на основе общего анализа
+        if (trustChange > 0) {
+            return 'positive';
+        } else if (trustChange < 0) {
             return 'negative';
         }
         
+        this.lastResponseType = 'neutral';
         return 'neutral';
     }
 
@@ -86,23 +125,23 @@ class CustomerSimulator {
 
         const responseType = this.analyzeUserResponse(message);
         
+        if (this.concernsRaised.size > 0) {
+            const concerns = Array.from(this.concernsRaised);
+            const randomConcern = concerns[Math.floor(Math.random() * concerns.length)];
+            if (this.questions[randomConcern + '_concerns']) {
+                const questions = this.questions[randomConcern + '_concerns'];
+                return questions[Math.floor(Math.random() * questions.length)];
+            }
+        }
+        
         if (this.askedQuestions.size >= 2) {
             if (this.positiveResponses >= 2 && Math.random() < 0.4) {
                 this.conversationState = 'decision';
-                const decisionResponse = this.responses.decision[Math.floor(Math.random() * this.responses.decision.length)];
-                const confirmations = [
-                    "Отлично! Я рад, что вы приняли решение. Давайте я расскажу подробнее о курсе.",
-                    "Прекрасный выбор! Сейчас я предоставлю вам полную информацию о программе.",
-                    "Замечательно! Я подготовлю для вас детальную информацию о курсе."
-                ];
-                return `${decisionResponse}\n\n${confirmations[Math.floor(Math.random() * confirmations.length)]}`;
+                return this.responses.decision[Math.floor(Math.random() * this.responses.decision.length)];
             }
             
             if (this.negativeResponses >= 2) {
-                const concernResponse = this.getConcernResponse();
-                if (concernResponse) {
-                    return concernResponse;
-                }
+                return this.responses.objections[Math.floor(Math.random() * this.responses.objections.length)];
             }
         }
 
@@ -110,9 +149,11 @@ class CustomerSimulator {
         
         let contextualResponse = '';
         if (responseType === 'positive') {
-            contextualResponse = this.responses.interest[Math.floor(Math.random() * this.responses.interest.length)];
+            contextualResponse = this.responses.positive_reactions[Math.floor(Math.random() * this.responses.positive_reactions.length)];
         } else if (responseType === 'negative') {
-            contextualResponse = this.responses.hesitation[Math.floor(Math.random() * this.responses.hesitation.length)];
+            contextualResponse = this.responses.negative_reactions[Math.floor(Math.random() * this.responses.negative_reactions.length)];
+        } else {
+            contextualResponse = this.responses.neutral_reactions[Math.floor(Math.random() * this.responses.neutral_reactions.length)];
         }
         
         if (contextualResponse) {
@@ -122,33 +163,7 @@ class CustomerSimulator {
         return question;
     }
 
-    getConcernResponse() {
-        const concerns = {
-            'price': [
-                "Понимаю ваши опасения по поводу цены. У нас есть рассрочка, и вы можете начать с небольшого платежа.",
-                "Цена может показаться высокой, но учтите, что это инвестиция в ваше будущее. После курса вы сможете зарабатывать значительно больше."
-            ],
-            'duration': [
-                "Курс действительно требует времени, но вы можете учиться в своем темпе и совмещать с работой.",
-                "Длительность обучения оптимальна для качественного усвоения материала. При этом вы получаете доступ к материалам навсегда."
-            ],
-            'features': [
-                "Давайте я подробнее расскажу о том, что входит в программу. Возможно, это поможет вам принять решение.",
-                "У нас есть пробный урок, где вы можете оценить качество обучения и формат."
-            ]
-        };
-
-        if (this.lastQuestionType && concerns[this.lastQuestionType]) {
-            return concerns[this.lastQuestionType][Math.floor(Math.random() * concerns[this.lastQuestionType].length)];
-        }
-
-        return null;
-    }
-
     getProductInfo() {
-        if (!this.currentProduct) {
-            this.selectRandomProduct();
-        }
         return this.currentProduct;
     }
 }
@@ -162,6 +177,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await customerSimulator.initialize();
 
+    function updateAgreementLevel(level) {
+        const progressBar = document.querySelector('.agreement-progress');
+        const valueText = document.querySelector('.agreement-value');
+        progressBar.style.width = `${level}%`;
+        valueText.textContent = `${level}%`;
+        
+        if (level < 30) {
+            progressBar.style.backgroundColor = '#ff4d4d';
+        } else if (level < 70) {
+            progressBar.style.backgroundColor = '#ffd700';
+        } else {
+            progressBar.style.backgroundColor = '#4CAF50';
+        }
+    }
+
     function addMessage(text, isUser = false) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
@@ -171,7 +201,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function formatProductInfo(product) {
-        return `Курс: ${product.name}\nЦена: ${product.price}\nДлительность: ${product.duration}\n\nЧто входит:\n${product.features.map(f => `- ${f}`).join('\n')}\n\nПреимущества:\n${product.benefits.map(b => `- ${b}`).join('\n')}`;
+        if (customerSimulator.conversationState === 'decision') {
+            return `Отлично! Мы рады, что вы выбрали наше решение. Наш менеджер свяжется с вами в ближайшее время для оформления договора и начала сотрудничества.`;
+        }
+        return `Комплексное обслуживание корпоративного автотранспорта\n\nЧто входит:\n${product.features.map(f => `- ${f}`).join('\n')}\n\nПреимущества:\n${product.benefits.map(b => `- ${b}`).join('\n')}`;
     }
 
     async function handleUserInput() {
@@ -188,10 +221,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = customerSimulator.getResponse(text);
             loadingIndicator.style.display = 'none';
             addMessage(response);
+            
+            updateAgreementLevel(customerSimulator.agreementLevel);
 
             if (customerSimulator.conversationState === 'decision') {
                 const product = customerSimulator.getProductInfo();
                 addMessage(formatProductInfo(product));
+                addMessage("Для начала работы нам потребуются следующие документы:\n- Реквизиты компании\n- Список автомобилей\n- Контактные данные ответственного лица");
             }
         } catch (error) {
             loadingIndicator.style.display = 'none';

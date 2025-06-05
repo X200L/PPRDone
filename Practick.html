@@ -23,9 +23,16 @@
         </header>
 
         <div class="chat-container">
+            <div class="agreement-container">
+                <div class="agreement-label">Уровень доверия клиента:</div>
+                <div class="agreement-bar">
+                    <div class="agreement-progress" style="width: 0%"></div>
+                </div>
+                <div class="agreement-value">0%</div>
+            </div>
             <div class="chat-messages" id="chat-messages">
             </div>
-            <div class="loading" id="loading">AI печатает</div>
+            <div class="loading" id="loading">Клиент печатает</div>
             <div class="input-container">
                 <input type="text" id="user-input" placeholder="Введите ваш вопрос...">
                 <button id="send-button">Отправить</button>
