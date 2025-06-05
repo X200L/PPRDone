@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function formatProductInfo(product) {
         if (customerSimulator.conversationState === 'decision') {
-            return `Отлично! Мы рады, что вы выбрали наше решение. Наш менеджер свяжется с вами в ближайшее время для оформления договора и начала сотрудничества.`;
+            return `Отлично! Вы прошли практику`;
         }
         return `Комплексное обслуживание корпоративного автотранспорта\n\nЧто входит:\n${product.features.map(f => `- ${f}`).join('\n')}\n\nПреимущества:\n${product.benefits.map(b => `- ${b}`).join('\n')}`;
     }
