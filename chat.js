@@ -51,71 +51,69 @@ class CustomerSimulator {
         return randomQuestion;
     }
 
-    analyzeUserResponse(message) {
-        const messageLower = message.toLowerCase();
+    async analyzeUserResponse(message) {
+        // Анализируем сообщение на наличие ключевых слов
+        const lowerMessage = message.toLowerCase();
         let trustChange = 0;
-        
-        // Анализ ключевых слов для определения типа ответа
-        if (messageLower.includes('цена') || messageLower.includes('стоимость') || messageLower.includes('руб')) {
-            this.concernsRaised.add('price');
-        }
-        
-        if (messageLower.includes('внедр') || messageLower.includes('установк') || messageLower.includes('настройк')) {
-            this.concernsRaised.add('implementation');
-        }
-        
-        if (messageLower.includes('качеств') || messageLower.includes('гарант') || messageLower.includes('поддержк')) {
-            this.concernsRaised.add('quality');
-        }
-        
-        if (messageLower.includes('эконом') || messageLower.includes('сэконом') || messageLower.includes('выгод')) {
-            this.concernsRaised.add('savings');
-        }
-        
-        if (messageLower.includes('преимуществ') || messageLower.includes('лучше') || messageLower.includes('уникальн')) {
-            this.concernsRaised.add('advantages');
+        let responseType = 'neutral';
+
+        // Подсчитываем количество каждого типа ключевых слов
+        const positiveCount = this.trustKeywords.positive.filter(word => 
+            lowerMessage.includes(word.toLowerCase())
+        ).length;
+
+        const negativeCount = this.trustKeywords.negative.filter(word => 
+            lowerMessage.includes(word.toLowerCase())
+        ).length;
+
+        const trustCount = this.trustKeywords.trust.filter(word => 
+            lowerMessage.includes(word.toLowerCase())
+        ).length;
+
+        const urgencyCount = this.trustKeywords.urgency.filter(word => 
+            lowerMessage.includes(word.toLowerCase())
+        ).length;
+
+        // Рассчитываем изменение доверия
+        trustChange = (positiveCount * this.trustKeywords.weights.positive) +
+                     (negativeCount * -this.trustKeywords.weights.negative) +
+                     (trustCount * this.trustKeywords.weights.trust) +
+                     (urgencyCount * this.trustKeywords.weights.urgency);
+
+        // Обновляем уровень доверия
+        this.agreementLevel = Math.max(0, Math.min(100, this.agreementLevel + trustChange));
+
+        // Проверяем, достигнут ли порог доверия для автоматического согласия
+        if (this.agreementLevel >= 70 && this.conversationState !== 'decision') {
+            this.conversationState = 'decision';
+            responseType = 'positive';
+            return {
+                text: "Да, я согласен с вашим предложением. Давайте начнем сотрудничество.",
+                type: responseType
+            };
         }
 
-        // Проверка положительных ключевых слов
-        const positiveCount = this.trustKeywords.positive.filter(word => messageLower.includes(word)).length;
-        if (positiveCount > 0) {
-            this.positiveResponses++;
-            trustChange += positiveCount * this.trustKeywords.weights.positive;
-            this.lastResponseType = 'positive';
-        }
-
-        // Проверка отрицательных ключевых слов
-        const negativeCount = this.trustKeywords.negative.filter(word => messageLower.includes(word)).length;
-        if (negativeCount > 0) {
-            this.negativeResponses++;
-            trustChange -= negativeCount * this.trustKeywords.weights.negative;
-            this.lastResponseType = 'negative';
-        }
-
-        // Проверка ключевых слов доверия
-        const trustCount = this.trustKeywords.trust.filter(word => messageLower.includes(word)).length;
-        if (trustCount > 0) {
-            trustChange += trustCount * this.trustKeywords.weights.trust;
-        }
-
-        // Проверка срочности
-        const urgencyCount = this.trustKeywords.urgency.filter(word => messageLower.includes(word)).length;
-        if (urgencyCount > 0) {
-            trustChange += urgencyCount * this.trustKeywords.weights.urgency;
-        }
-
-        // Обновление уровня согласия с учетом всех факторов
-        this.agreementLevel = Math.min(100, Math.max(0, this.agreementLevel + trustChange));
-
-        // Определение типа ответа на основе общего анализа
+        // Определяем тип ответа на основе изменения доверия
         if (trustChange > 0) {
-            return 'positive';
+            responseType = 'positive';
         } else if (trustChange < 0) {
-            return 'negative';
+            responseType = 'negative';
         }
-        
-        this.lastResponseType = 'neutral';
-        return 'neutral';
+
+        // Генерируем ответ на основе типа реакции
+        let response;
+        if (responseType === 'positive') {
+            response = this.responses.positive_reactions[Math.floor(Math.random() * this.responses.positive_reactions.length)];
+        } else if (responseType === 'negative') {
+            response = this.responses.negative_reactions[Math.floor(Math.random() * this.responses.negative_reactions.length)];
+        } else {
+            response = this.responses.neutral_reactions[Math.floor(Math.random() * this.responses.neutral_reactions.length)];
+        }
+
+        return {
+            text: response,
+            type: responseType
+        };
     }
 
     getResponse(message) {

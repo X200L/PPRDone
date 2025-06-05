@@ -152,7 +152,7 @@ function updateScore() {
 }
 
 function endScenario() {
-    responseOptions.innerHTML = '<button class="scenario-btn" onclick="window.location.href=\'index.html\'">Вернуться к урокам</button>';
+    responseOptions.innerHTML = '<button class="scenario-btn" onclick="window.location.href=\'lessons.html\'">Вернуться к урокам</button>';
     addMessage(`Сценарий завершен! Ваш результат: ${score} очков.`, 'client');
 }
 
@@ -161,7 +161,7 @@ function showError(message) {
         <div class="error-message">
             <h3>Ошибка</h3>
             <p>${message}</p>
-            <button class="scenario-btn" onclick="window.location.href='index.html'">Вернуться к урокам</button>
+            <button class="scenario-btn" onclick="window.location.href='lessons.html'">Вернуться к урокам</button>
         </div>
     `;
 } 
