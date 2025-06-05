@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Interface</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon"><img src="logo.png" alt="logo"></div>
+                    <div class="logo-text">AI Chat</div>
+                </div>
+                <nav class="main-nav">
+                    <a href="index.html" class="nav-link">Главная</a>
+                    <a href="lessons.html" class="nav-link">Уроки</a>
+                    <a href="Practick.html" class="nav-link active">Практика</a>
+                </nav>
+            </div>
+        </header>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+                <div class="message ai-message">
+                    Здравствуйте! Я AI ассистент. Задайте мне вопрос, и я постараюсь помочь.
+                </div>
+            </div>
+            <div class="loading" id="loading">AI печатает</div>
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Введите ваш вопрос...">
+                <button id="send-button">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="chat.js"></script>
+</body>
+</html>
