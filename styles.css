@@ -67,27 +67,25 @@ header {
 
 .main-nav {
     display: flex;
-    gap: 30px;
+    gap: 20px;
     align-items: center;
 }
 
 .nav-link {
-    color: #00897b;
+    color: #333;
     text-decoration: none;
     font-weight: 500;
-    font-size: 1.1em;
     padding: 8px 16px;
     border-radius: 20px;
     transition: all 0.3s ease;
 }
 
 .nav-link:hover {
-    background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
-    color: #00695c;
+    background: rgba(0, 0, 0, 0.05);
 }
 
 .nav-link.active {
-    background: linear-gradient(135deg, #00897b 0%, #00acc1 100%);
+    background: #007bff;
     color: white;
 }
 
@@ -305,22 +303,27 @@ header {
     
     .header-content {
         flex-direction: column;
-        gap: 15px;
         padding: 10px;
     }
 
     .main-nav {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
         width: 100%;
+        overflow-x: auto;
+        padding: 10px 0;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+    }
+
+    .main-nav::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
     }
 
     .nav-link {
-        font-size: 0.9em;
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 14px;
         padding: 6px 12px;
-        width: 100%;
-        text-align: center;
     }
 
     .hero-section {
