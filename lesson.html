@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Урок - Тренажер продаж</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon"><img src="logo.png" alt="logo"></div>
+                    <div class="logo-text">ХзНеПридумал</div>
+                </div>
+                <nav class="main-nav">
+                    <a href="index.html" class="nav-link">Главная</a>
+                    <a href="#" class="nav-link active">Уроки</a>
+                </nav>
+            </div>
+        </header>
+        
+        <div class="scenario-container">
+            <div class="scenario-info">
+                <h2 id="lesson-title">Загрузка урока...</h2>
+            </div>
+            
+            <div class="interaction-area">
+                <div id="scenario-description" class="scenario-description"></div>
+                <div id="chat-history" class="chat-history"></div>
+                <div id="response-options" class="response-options"></div>
+            </div>
+            
+            <div class="score-container">
+                <h3>Ваш результат:</h3>
+                <div id="score">0</div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="lesson.js"></script>
+</body>
+</html> 
